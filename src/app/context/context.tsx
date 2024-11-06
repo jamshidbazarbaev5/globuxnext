@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useCurrentUser, useLogin, useLogout } from "@/app/api/query/query";
+import { useCurrentUser, useLogout } from "@/app/api/query/query";
 import { User } from '../models/models';
 import axios from 'axios';
 import { notifications } from "@mantine/notifications";

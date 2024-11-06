@@ -6,16 +6,46 @@ import { ICategory } from "../models/models"
 import { useDispatch, useSelector } from "react-redux"
 import { setSelectedCategory } from "../redux/categorySlice"
 import { RootState } from "../redux/store"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useMediaQuery } from "@mantine/hooks"
 import Link from "next/link"
+import { GetStaticProps } from 'next'
+import { api } from '../api/axios/axios'
 
-export default function Component() {
+interface CategoryListProps {
+  initialCategories: ICategory[]
+}
+
+export const getStaticProps: GetStaticProps<CategoryListProps> = async () => {
+  try {
+    const response = await api.get('/categories')
+    const initialCategories = response.data.data.categories
+
+    return {
+      props: {
+        initialCategories,
+      },
+      revalidate: 60 * 60,
+    }
+  } catch (error) {
+    console.error('Failed to fetch categories:', error)
+    return { props: { initialCategories: [] } }
+  }
+}
+
+export default function Component({ initialCategories }: CategoryListProps) {
   const { data: categories, isLoading, isError } = useCategories()
   const selectedCategory = useSelector((state: RootState) => state.category.selectedCategory)
   const dispatch = useDispatch()
   const [opened, setOpened] = useState(false)
   const isMobile = useMediaQuery('(max-width: 768px)')
+  const [displayCategories, setDisplayCategories] = useState(initialCategories)
+
+  useEffect(() => {
+    if (categories) {
+      setDisplayCategories(categories)
+    }
+  }, [categories])
 
   const handleCategoryClick = (categoryId: number) => {
     dispatch(setSelectedCategory(categoryId))
@@ -49,7 +79,7 @@ export default function Component() {
             onClick={() => handleCategoryClick(0)}
           />
         </Link>
-        {categories?.map((category: ICategory) => (
+        {displayCategories.map((category: ICategory) => (
           <Link 
             href={`/category/${category.id}`} 
             key={category.id} 

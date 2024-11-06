@@ -1,43 +1,50 @@
 'use client'
 import { TextInput } from "@mantine/core"
 import { IconSearch } from "@tabler/icons-react"
-import { useCallback, useEffect, useState } from "react"
-import debounce from "lodash/debounce"
-import { useDispatch } from "react-redux"
-import { setSearchTerm } from "../redux/searchSlice"
+import { useCallback, useState, useTransition } from "react"
+import { useRouter, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 
 export default function SearchBar() {
   const [inputValue, setInputValue] = useState<string>("")
-  const dispatch = useDispatch()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+  const [isPending, startTransition] = useTransition()
   
-  const debouncedDispatch = useCallback(
-    debounce((value: string) => {
-      dispatch(setSearchTerm(value))
-    }, 500),
-    [dispatch]
+  const createQueryString = useCallback(
+    (name: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set(name, value)
+      return params.toString()
+    },
+    [searchParams]
   )
 
-  useEffect(() => {
-    if (inputValue === '') {
-      dispatch(setSearchTerm(''))
-    } else {
-      debouncedDispatch(inputValue)
-    }
+  const handleSearch = useCallback((value: string) => {
+    const newPath = value === '' 
+      ? '/products' 
+      : `${pathname}?${createQueryString('search', value)}`
+    startTransition(() => {
+      router.push(newPath)
+    })
+  }, [router, pathname, createQueryString])
 
-    return () => {
-      debouncedDispatch.cancel()
-    }
-  }, [inputValue, debouncedDispatch, dispatch])
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setInputValue(value)
+    handleSearch(value)
+  }
 
   return (
     <TextInput
       placeholder="Search products..."
       leftSection={<IconSearch size={16} stroke={1.5} />}
       value={inputValue}
-      onChange={(e) => setInputValue(e.target.value)}
+      onChange={handleInputChange}
       w={'50%'}
       radius="md"
-
+      disabled={isPending}
     />
   )
 }

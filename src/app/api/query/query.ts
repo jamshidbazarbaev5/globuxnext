@@ -6,7 +6,8 @@ import { RootState } from '@/app/redux/store'
 import { useSelector } from 'react-redux'
 
 interface ProductsResponse {
-  items: IProduct[]
+  items: IProduct[];
+  totalItems: number;
 }
 
 interface ProductResponse {
@@ -15,34 +16,45 @@ interface ProductResponse {
 
 
 
-export function useProducts(categoryId?: number) {
-  const searchTerm = useSelector((state: RootState) => state.search.searchTerm)
+export const useProducts = (categoryId?: number, page: number = 1, limit: number = 12) => {
+  const searchTerm = useSelector((state: RootState) => state.search.searchTerm);
+  const offset = (page - 1) * limit;
 
-  return useQuery<ApiResponse<ProductsResponse>, Error>({
-    queryKey: ['products', categoryId, searchTerm], 
+  return useQuery<{ items: IProduct[], totalPages: number }, Error>({
+    queryKey: ['products', categoryId, searchTerm, page, limit],
     queryFn: async () => {
-      const params = new URLSearchParams()
-      
-      if (categoryId && categoryId !== 0) {
-        params.append('category', categoryId.toString())
-      }
-      
-      if (searchTerm) {
-        params.append('search', searchTerm)
-      }
+      try {
+        const queryParams = new URLSearchParams({
+          offset: offset.toString(),
+          limit: limit.toString(),
+        });
 
-      const url = `/products${params.toString() ? `?${params.toString()}` : ''}`
-      
-      const response = await api.get<ApiResponse<ProductsResponse>>(url)
-      
-      if (response.data.success) {
-        return response.data
-      } else {
-        throw new Error(response.data.errMessage || 'Failed to fetch products')
+        if (searchTerm) {
+          queryParams.append('search', searchTerm);
+        }
+
+        if (categoryId) {
+          queryParams.append('category', categoryId.toString());
+        }
+
+        const response = await api.get<ApiResponse<ProductsResponse>>(
+          `/products?${queryParams.toString()}`
+        );
+
+        console.log('API Request URL:', `/products?${queryParams.toString()}`);
+        console.log('Response:', response.data);
+
+        return {
+          items: response.data.data.items,
+          totalPages: Math.ceil(response.data.data.totalItems / limit),
+        };
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        throw error;
       }
     },
-  })
-}
+  });
+};
 
 
 
@@ -193,8 +205,12 @@ api.interceptors.response.use(
 export const useLogin = () => {
   return useMutation({
     mutationFn: async (credentials: { phone: string; password: string }) => {
-      const response = await api.post('/token', credentials);
-      return response.data;
+      const response = await api.post('/api/token', credentials); 
+      if (response.data.success) {
+        return response.data;
+      } else {
+        throw new Error(response.data.errMessage || 'Login failed');
+      }
     },
   });
 };
@@ -225,5 +241,4 @@ export const useLogout = () => {
     },
   });
 };
-
 

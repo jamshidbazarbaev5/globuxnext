@@ -42,7 +42,7 @@ export const Login: React.FC = () => {
         message: 'Вы успешно вошли в систему',
         color: 'green',
       });
-      // Replace window.location.href with router.push
+      console.log('Login successful, notification should show');  // Add this line
       setTimeout(() => router.push('/products'), 1000);
     } catch (error: any) {
       notifications.show({
@@ -50,6 +50,7 @@ export const Login: React.FC = () => {
         message: error.response?.data?.errMessage || 'Не удалось войти. Пожалуйста, проверьте свои данные и попробуйте снова.',
         color: 'red',
       });
+      console.error('Login error:', error);  // Add this line
     } finally {
       setIsLoading(false);
     }

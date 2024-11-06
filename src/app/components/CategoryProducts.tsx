@@ -1,5 +1,4 @@
-import React from 'react';
-import { useProducts } from '@/app/api/query/query';
+import React from "react";
 import {
   Card,
   Image,
@@ -10,26 +9,55 @@ import {
   Container,
   Title,
   Stack,
-  Loader,
   Alert,
-} from '@mantine/core';
-import { IconAlertCircle } from '@tabler/icons-react';
-import Link from 'next/link';
-import { useCategory } from '@/app/api/query/query';
+} from "@mantine/core";
+import { IconAlertCircle } from "@tabler/icons-react";
+import Link from "next/link";
+import { IProduct, ICategory } from "@/app/models/models";
+import { GetStaticProps, InferGetStaticPropsType } from "next";
+import { api } from "@/app/api/axios/axios";
 
-const CategoryProducts = ({ categoryId }: { categoryId: number }) => {
-  const { data: products, isLoading: productsLoading, error: productsError } = useProducts(categoryId);
-  const { data: category, isLoading: categoryLoading } = useCategory(categoryId);
+export const getStaticPaths = async () => {
+  const response = await api.get('/categories');
+  const categories = response.data.data.categories;
 
-  if (productsLoading || categoryLoading) {
-    return (
-      <Container className="h-screen flex items-center justify-center">
-        <Loader size="xl" />
-      </Container>
-    );
+  const paths = categories.map((category: ICategory) => ({
+    params: { categoryId: category.id.toString() },
+  }));
+
+  paths.push({ params: { categoryId: '0' } }); 
+  return { paths, fallback: 'blocking' };
+};
+
+export const getStaticProps: GetStaticProps<{
+  products: IProduct[];
+  category: ICategory | null;
+}> = async ({ params }) => {
+  const categoryId = params?.categoryId as string;
+  try {
+    const [productsRes, categoryRes] = await Promise.all([
+      api.get(`/products${categoryId !== "0" ? `?category=${categoryId}` : ""}`),
+      categoryId !== "0" ? api.get(`/categories/${categoryId}`) : null,
+    ]);
+
+    return {
+      props: {
+        products: productsRes.data.data.items,
+        category: categoryRes ? categoryRes.data.data : null,
+      },
+      revalidate: 60 * 60, 
+    };
+  } catch (error) {
+    console.error("Failed to fetch data:", error);
+    return { props: { products: [], category: null }, revalidate: 60 };
   }
+};
 
-  if (productsError) {
+const CategoryProducts = ({
+  products,
+  category,
+}: InferGetStaticPropsType<typeof getStaticProps>) => {
+  if (!products) {
     return (
       <Container className="h-screen flex items-center justify-center">
         <Alert
@@ -47,19 +75,17 @@ const CategoryProducts = ({ categoryId }: { categoryId: number }) => {
   return (
     <Container size="xl" py="xl">
       <Title order={1} mb="lg">
-        {categoryId === 0 ? 'All Products' : category?.name}
+        {!category ? "All Products" : category.name}
       </Title>
-      {products?.data.items.length === 0 ? (
-        <Alert color="gray">
-          No products found in this category.
-        </Alert>
+      {products.length === 0 ? (
+        <Alert color="gray">No products found in this category.</Alert>
       ) : (
         <Grid>
-          {products?.data.items.map((product) => (
+          {products.map((product) => (
             <Grid.Col key={product.id} span={{ base: 12, sm: 6, md: 4, lg: 3 }}>
               <Link
                 href={`/product/${product.id}`}
-                style={{ textDecoration: 'none' }}
+                style={{ textDecoration: "none" }}
               >
                 <Card
                   shadow="sm"
@@ -67,14 +93,14 @@ const CategoryProducts = ({ categoryId }: { categoryId: number }) => {
                   radius="md"
                   withBorder
                   style={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
                   }}
                 >
                   <Card.Section>
                     <Image
-                      src={product.images[0]?.image ?? ''}
+                      src={product.images[0]?.image ?? ""}
                       height={200}
                       alt={product.name}
                       fit="cover"

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   useAddToCart,
   useCart,
@@ -9,7 +9,6 @@ import {
 } from "@/app/api/query/query";
 import {
   Container,
-  Image,
   Text,
   Group,
   Badge,
@@ -21,13 +20,14 @@ import {
   Card,
   Alert,
   Stack,
-  Transition,
   Loader,
   NumberInput,
+  Image,
+  Notification,
 } from "@mantine/core";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
-import { AlertCircle, ShoppingCart, Heart } from "lucide-react";
+import { AlertCircle, ShoppingCart, Heart, Check, X } from "lucide-react";
 import { RootState } from "../redux/store";
 import { IProduct } from "../models/models";
 import { useAuth } from "../context/context";
@@ -42,7 +42,7 @@ const Component = ({ productId }: { productId: number }) => {
   const { data: categories } = useCategories();
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
-  const [notificationColor, setNotificationColor] = useState("red");
+  const [notificationColor, setNotificationColor] = useState<"red" | "teal">("red");
   const [quantity, setQuantity] = useState(1);
   const { data: relatedProductsData, isLoading: isRelatedLoading } =
     useProducts(selectedCategory || product?.category);
@@ -50,6 +50,15 @@ const Component = ({ productId }: { productId: number }) => {
   const { data: cartItems } = useCart();
   const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (showNotification) {
+      const timer = setTimeout(() => {
+        setShowNotification(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showNotification]);
 
   const handleAddToCart = () => {
     if (product) {
@@ -72,10 +81,9 @@ const Component = ({ productId }: { productId: number }) => {
   };
 
   const backToProducts = () => {
-    if(pathname===`/product/${productId}`){
-      router.push("/products")
-    }
-  }
+    router.push("/products");
+  };
+  
   const handleRelatedProductClick = (productId: number) => {
     router.push(`/product/${productId}`);
   };
@@ -139,6 +147,16 @@ const Component = ({ productId }: { productId: number }) => {
 
   return (
     <Container size="xl" py="xl">
+      {showNotification && (
+        <Notification
+          title={notificationColor === "teal" ? "Success" : "Error"}
+          color={notificationColor}
+          onClose={() => setShowNotification(false)}
+          style={{ position: 'fixed', top: 20, right: 20, zIndex: 1000 }}
+        >
+          {notificationMessage}
+        </Notification>
+      )}
       <Paper shadow="sm" p="xl" radius="lg" withBorder>
       <Button style={{ marginTop: "-1rem",marginBottom: "0.8rem" }} onClick={backToProducts}>Back to products</Button>
     
@@ -150,8 +168,7 @@ const Component = ({ productId }: { productId: number }) => {
                   src={product.images[0].image}
                   alt={product.name}
                   height={400}
-                  fit="cover"
-                  radius="md"
+                  width={400}
                 />
               ) : (
                 <Group
@@ -239,9 +256,9 @@ const Component = ({ productId }: { productId: number }) => {
         <Group justify="center" py="xl">
           <Loader size="lg" />
         </Group>
-      ) : relatedProductsData?.data.items?.length ? (
+      ) : relatedProductsData?.items?.length ? (
         <Grid>
-          {relatedProductsData?.data.items?.map((relatedProduct: IProduct) => (
+          {relatedProductsData?.items?.map((relatedProduct: IProduct) => (
             <Grid.Col key={relatedProduct.id} span={{ base: 12, sm: 6, lg: 3 }}>
               <Card
                 shadow="sm"
