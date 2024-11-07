@@ -2,7 +2,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/app/api/axios/axios'
 import { ApiResponse, CartData, CategoriesResponse, ICategory, IProduct } from '@/app/models/models'
-import { RootState } from '@/app/redux/store'
 
 interface ProductsResponse {
   items: IProduct[];
