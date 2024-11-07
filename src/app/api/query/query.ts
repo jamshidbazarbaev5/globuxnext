@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/app/api/axios/axios'
 import { ApiResponse, CartData, CategoriesResponse, ICategory, IProduct } from '@/app/models/models'
 import { RootState } from '@/app/redux/store'
-import { useSelector } from 'react-redux'
 
 interface ProductsResponse {
   items: IProduct[];
@@ -14,10 +13,7 @@ interface ProductResponse {
   items: IProduct
 }
 
-
-
-export const useProducts = (categoryId?: number, page: number = 1, limit: number = 12) => {
-  const searchTerm = useSelector((state: RootState) => state.search.searchTerm);
+export const useProducts = (categoryId?: number, page: number = 1, limit: number = 12, searchTerm?: string) => {
   const offset = (page - 1) * limit;
 
   return useQuery<{ items: IProduct[], totalPages: number }, Error>({
@@ -51,13 +47,10 @@ export const useProducts = (categoryId?: number, page: number = 1, limit: number
       } catch (error) {
         console.error('Error fetching products:', error);
         throw error;
-      }
+        }
     },
   });
 };
-
-
-
 
 export function useProduct(productId: number) {
   return useQuery<IProduct, Error>({
@@ -73,7 +66,6 @@ export function useProduct(productId: number) {
     enabled: !!productId,
   })
 }
-
 
 export const useCategories = () => {
   return useQuery({
@@ -106,6 +98,7 @@ export const  useCart = ()=>{
     }
   })
 }
+
 export const useAddToCart = ()=>{
   const queryClient = useQueryClient()
   return useMutation({
@@ -170,7 +163,6 @@ export const useDeleteAllCartItems = () => {
   });
 };
 
-
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -201,7 +193,6 @@ api.interceptors.response.use(
   }
 );
 
-
 export const useLogin = () => {
   return useMutation({
     mutationFn: async (credentials: { phone: string; password: string }) => {
@@ -214,9 +205,6 @@ export const useLogin = () => {
     },
   });
 };
-
-
-
 
 export const useCurrentUser = () => {
   return useQuery({
@@ -241,4 +229,3 @@ export const useLogout = () => {
     },
   });
 };
-

@@ -1,11 +1,11 @@
-// "use client";
 import { Button, Container, Group } from "@mantine/core";
 import Link from "next/link";
 import SearchBar from "./searchBar";
 import { IconShoppingCart } from "@tabler/icons-react";
 import { useAuth } from "../context/context";
 import { useRouter } from "next/navigation";
-import { usePathname } from "next/navigation"; 
+import { usePathname } from "next/navigation";
+import Register from "./Register";
 
 const SimpleLayout = ({ children }: { children: React.ReactNode }) => (
   <div
@@ -22,7 +22,7 @@ const SimpleLayout = ({ children }: { children: React.ReactNode }) => (
 
 export const Header = () => {
   const router = useRouter();
-  const pathname = usePathname(); 
+  const pathname = usePathname();
   const { isAuthenticated, logout, user } = useAuth();
 
   const handleLogout = async () => {
@@ -33,7 +33,7 @@ export const Header = () => {
   const handleUsernameClick = () => {
     if (pathname === "/profile") {
       router.push("/products");
-    }else{
+    } else {
       router.push("/profile");
     }
   };
@@ -43,6 +43,12 @@ export const Header = () => {
     } else {
       return user?.first_name;
     }
+  };
+  const register = () => {
+    router.push("/register");
+  };
+  const login = () => {
+    router.push("/login");
   };
 
   return (
@@ -58,16 +64,15 @@ export const Header = () => {
         </Link>
 
         <SearchBar />
-
         {isAuthenticated ? (
           <Group>
             <Link
               href="/cart"
               style={{ textDecoration: "none", color: "inherit" }}
             >
-               <Button  variant="outline" fullWidth>
-              <IconShoppingCart size={20} />
-            </Button>
+              <Button variant="outline" fullWidth>
+                <IconShoppingCart size={20} />
+              </Button>
             </Link>
             <Button onClick={handleLogout} color="red">
               Выйты
@@ -75,18 +80,17 @@ export const Header = () => {
             <Button onClick={handleUsernameClick} variant="outline">
               {path()}
             </Button>
-         
           </Group>
         ) : (
           <SimpleLayout>
-            <Link
-              href="/login"
-              style={{ textDecoration: "none", color: "inherit" }}
-            >
+          
               <Group>
-                <span className="font-bold text-xl">Login</span>
+              <Button onClick={login} color="blue" variant="outline" style={{marginRight:"10px"}}>Войти</Button>
+           
               </Group>
-            </Link>
+            <Group>
+              {!isAuthenticated && <Button onClick={register} color="blue" variant="outline">Регистрация</Button>}
+            </Group>
           </SimpleLayout>
         )}
       </Group>

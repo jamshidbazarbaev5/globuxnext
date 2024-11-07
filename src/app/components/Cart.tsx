@@ -20,7 +20,6 @@ import {
   NumberInput,
 } from "@mantine/core"
 import {notifications } from "@mantine/notifications"
-import { IProduct } from "../models/models";
 import { IconShoppingCart, IconTrash } from "@tabler/icons-react";
 import {useRouter} from "next/navigation"
 
@@ -30,26 +29,6 @@ interface ProductImage {
   image: string;
 }
 
-interface Product {
-  id: number;
-  code: string;
-  name: string;
-  description: string;
-  discounts: null | any;
-  price: number;
-  discount_price: null | number;
-  is_new: boolean;
-  amount: number;
-  category: number;
-  images: ProductImage[];
-}
-
-interface CartItem {
-  id: number;
-  product: Product;
-  quantity: number;
-  cart_items: number;
-}
 
 
 

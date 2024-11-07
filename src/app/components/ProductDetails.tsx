@@ -2,8 +2,6 @@
 import React, { useState, useEffect } from "react";
 import {
   useAddToCart,
-  useCart,
-  useCategories,
   useProduct,
   useProducts,
 } from "@/app/api/query/query";
@@ -22,16 +20,15 @@ import {
   Stack,
   Loader,
   NumberInput,
-  Image,
   Notification,
+  Image,
 } from "@mantine/core";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
-import { AlertCircle, ShoppingCart, Heart, Check, X } from "lucide-react";
+import { AlertCircle} from "lucide-react";
 import { RootState } from "../redux/store";
 import { IProduct } from "../models/models";
 import { useAuth } from "../context/context";
-import { usePathname } from "next/navigation"; 
 
 const Component = ({ productId }: { productId: number }) => {
   const { data: product, isLoading, error } = useProduct(productId);
@@ -39,7 +36,6 @@ const Component = ({ productId }: { productId: number }) => {
     (state: RootState) => state.category.selectedCategory
   );
   const { user, isAuthenticated } = useAuth();
-  const { data: categories } = useCategories();
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
   const [notificationColor, setNotificationColor] = useState<"red" | "teal">("red");
@@ -47,9 +43,8 @@ const Component = ({ productId }: { productId: number }) => {
   const { data: relatedProductsData, isLoading: isRelatedLoading } =
     useProducts(selectedCategory || product?.category);
   const addToCartMutation = useAddToCart();
-  const { data: cartItems } = useCart();
   const router = useRouter();
-  const pathname = usePathname();
+  console.log(product?.images[0].image)
 
   useEffect(() => {
     if (showNotification) {
@@ -67,12 +62,12 @@ const Component = ({ productId }: { productId: number }) => {
         {
           onSuccess: () => {
             setNotificationColor("teal");
-            setNotificationMessage("Product added to cart successfully");
+            setNotificationMessage("Товар успешно добавлен в корзину");
             setShowNotification(true);
           },
           onError: (error) => {
             setNotificationColor("red");
-            setNotificationMessage("An error occurred while adding to cart");
+            setNotificationMessage("Произошла ошибка при добавлении в корзину");
             setShowNotification(true);
           },
         }
@@ -120,11 +115,11 @@ const Component = ({ productId }: { productId: number }) => {
         <Alert
           variant="filled"
           color="red"
-          title="Error"
+          title="Ошибка"
           icon={<AlertCircle size={16} />}
         >
           {error.message ||
-            "Failed to load product details. Please try again later."}
+            "Не удалось загрузить детали продукта. Пожалуйста, попробуйте позже."}
         </Alert>
       </Container>
     );
@@ -136,10 +131,10 @@ const Component = ({ productId }: { productId: number }) => {
         <Alert
           variant="filled"
           color="yellow"
-          title="Not Found"
+          title="Не найдено"
           icon={<AlertCircle size={16} />}
         >
-          Product not found.
+          Продукт не найден.
         </Alert>
       </Container>
     );
@@ -149,7 +144,7 @@ const Component = ({ productId }: { productId: number }) => {
     <Container size="xl" py="xl">
       {showNotification && (
         <Notification
-          title={notificationColor === "teal" ? "Success" : "Error"}
+          title={notificationColor === "teal" ? "Успех" : "Ошибка"}
           color={notificationColor}
           onClose={() => setShowNotification(false)}
           style={{ position: 'fixed', top: 20, right: 20, zIndex: 1000 }}
@@ -158,7 +153,7 @@ const Component = ({ productId }: { productId: number }) => {
         </Notification>
       )}
       <Paper shadow="sm" p="xl" radius="lg" withBorder>
-      <Button style={{ marginTop: "-1rem",marginBottom: "0.8rem" }} onClick={backToProducts}>Back to products</Button>
+      <Button style={{ marginTop: "-1rem",marginBottom: "0.8rem" }} onClick={backToProducts}>Назад к продуктам</Button>
     
         <Grid gutter="xl">
           <Grid.Col span={{ base: 12, md: 6 }}>
@@ -177,7 +172,7 @@ const Component = ({ productId }: { productId: number }) => {
                   align="center"
                   style={{ background: "var(--mantine-color-gray-1)" }}
                 >
-                  <Text c="dimmed">Image not available</Text>
+                  <Text c="dimmed">Изображение недоступно</Text>
                 </Group>
               )}
             </Paper>
@@ -210,7 +205,7 @@ const Component = ({ productId }: { productId: number }) => {
                 color={product.discounts ? "green" : "red"}
                 radius="sm"
               >
-                {product.discounts ? "In Stock" : "Out of Stock"}
+                {product.discounts ? "Cкидка" : "Нет в скидке"}
               </Badge>
               <Badge
                 size="lg"
@@ -249,7 +244,7 @@ const Component = ({ productId }: { productId: number }) => {
       </Paper>
   
       <Title order={2} mt={48} mb="xl">
-        Related Products
+        Похожие продукты
       </Title>
   
       {isRelatedLoading ? (
@@ -290,7 +285,7 @@ const Component = ({ productId }: { productId: number }) => {
         </Grid>
       ) : (
         <Text c="dimmed" ta="center">
-          No related products found.
+          Похожие продукты не найдены.
         </Text>
       )}
     </Container>

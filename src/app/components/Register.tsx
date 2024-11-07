@@ -13,7 +13,6 @@ import {
   Stack,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { useForm } from '@mantine/form';
 
 const LazyDateInput = dynamic(() => import('@mantine/dates').then(module => module.DateInput), {
   ssr: false,
@@ -73,7 +72,6 @@ export default function AuthFlow() {
     e.preventDefault();
     const errors = validateForm(formValues);
     if (Object.keys(errors).length > 0) {
-      // Display errors
       return;
     }
 
