@@ -9,6 +9,7 @@ export interface IProduct {
   is_new: boolean;
   amount: number;
   category: number;
+  totalItems: number;
   images: {
     id: number;
     image: string;
@@ -94,4 +95,24 @@ export interface CartItem {
   cart: CartItem[];
   total: number;
   cartItems:number;
+}
+export interface CardCreationResponse {
+  success: boolean;
+  errMessage: string | null;
+  errorCode: string | null;
+  data: {
+    card: {
+      number: string;
+      expire: string;
+      token: string;
+      recurrent: boolean;
+      verify: boolean;
+      type: string;
+    };
+  };
+}
+
+export interface CardCreationData {
+  card_number: string;
+  expire_date: string;
 }

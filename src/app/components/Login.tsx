@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   TextInput,
   PasswordInput,
@@ -28,12 +28,12 @@ export const Login: React.FC = () => {
       password: '',
     },
     validate: {
-      phone: (value: string) => (/^998\d{9}$/.test(value) ? null : 'Неверный формат номера телефона'),
-      password: (value: string | any[]) => (value.length > 0 ? null : 'Требуется пароль'),
+      phone: (value) => (/^998\d{9}$/.test(value) ? null : 'Неверный формат номера телефона'),
+      password: (value) => (value.length > 0 ? null : 'Требуется пароль'),
     },
   });
 
-  const handleSubmit = async (values: { phone: string; password: string }) => {
+  const handleSubmit = useCallback(async (values: { phone: string; password: string }) => {
     setIsLoading(true);
     try {
       await login(values.phone, values.password);
@@ -42,40 +42,27 @@ export const Login: React.FC = () => {
         message: 'Вы успешно вошли в систему',
         color: 'green',
       });
-      console.log('Login successful, notification should show');  
-      setTimeout(() => router.push('/products'), 1000);
+      router.push('/products');
     } catch (error: any) {
       notifications.show({
         title: 'Ошибка',
         message: error.response?.data?.errMessage || 'Не удалось войти. Пожалуйста, проверьте свои данные и попробуйте снова.',
         color: 'red',
       });
-      console.error('Login error:', error);  
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [login, router]);
 
   return (
-    <Box
-      style={{
-        display: 'flex',
-        minHeight: '100vh',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px'
-      }}
-    >
-      <Paper
-        radius="md"
-        p="xl"
-        withBorder
-        style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: 400
-        }}
-      >
+    <Box style={{
+      display: 'flex',
+      minHeight: '100vh',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px'
+    }}>
+      <Paper radius="md" p="xl" withBorder style={{ position: 'relative', width: '100%', maxWidth: 400 }}>
         <LoadingOverlay visible={isLoading} />
         <Title order={2} mb="md">С возвращением</Title>
         

@@ -40,6 +40,7 @@ export default function Cart() {
   const deleteAllCartItems = useDeleteAllCartItems();
   const router = useRouter();
 
+  
   const handleProductClick = (productId: number) => {
     router.push(`/product/${productId}`);
   };
@@ -72,6 +73,9 @@ export default function Cart() {
         </Stack>
       </Center>
     );
+  }
+  const handleOrderClick = ()=>{
+    router.push('/order')
   }
 
   const handleQuantityChange = async (
@@ -209,6 +213,7 @@ export default function Cart() {
             </Group>
           </Button>
         </Group>
+        <Button onClick={handleOrderClick}>Оформить заказ</Button>
       </Stack>
     </Container>
   );

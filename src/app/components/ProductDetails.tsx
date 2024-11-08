@@ -41,10 +41,10 @@ const Component = ({ productId }: { productId: number }) => {
   const [notificationColor, setNotificationColor] = useState<"red" | "teal">("red");
   const [quantity, setQuantity] = useState(1);
   const { data: relatedProductsData, isLoading: isRelatedLoading } =
-    useProducts(selectedCategory || product?.category);
+    useProducts(selectedCategory || product?.category || 1, 1);
   const addToCartMutation = useAddToCart();
   const router = useRouter();
-  console.log(product?.images[0].image)
+  console.log(product?.images[0]?.image);
 
   useEffect(() => {
     if (showNotification) {

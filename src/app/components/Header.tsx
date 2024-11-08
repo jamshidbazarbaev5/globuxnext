@@ -51,6 +51,9 @@ export const Header = () => {
     router.push("/login");
   };
 
+  const myOrders = () => {
+    router.push("/myorders");
+  };
   return (
     <Container size="xl" h="100%">
       <Group justify="space-between" h="100%">
@@ -63,7 +66,11 @@ export const Header = () => {
           </Group>
         </Link>
 
-        <SearchBar />
+        <Group style={{marginLeft:"30px"}}>
+        <SearchBar/>
+
+          </Group>
+
         {isAuthenticated ? (
           <Group>
             <Link
@@ -80,12 +87,17 @@ export const Header = () => {
             <Button onClick={handleUsernameClick} variant="outline">
               {path()}
             </Button>
+            <Button onClick={myOrders} color="blue" variant="outline" style={{marginRight:"10px"}}> Мой заказы</Button>
+
           </Group>
         ) : (
           <SimpleLayout>
           
               <Group>
               <Button onClick={login} color="blue" variant="outline" style={{marginRight:"10px"}}>Войти</Button>
+           
+              </Group>
+              <Group>
            
               </Group>
             <Group>
