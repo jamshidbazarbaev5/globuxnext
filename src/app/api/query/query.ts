@@ -116,18 +116,15 @@ export const useAddToCart = () => {
 export const useUpdateCartItem = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ cartItemId, quantity, productId }: { cartItemId: number, quantity: number, productId: number }) => {
+    mutationFn: async ({ quantity, productId }: { cartItemId: number, quantity: number, productId: number }) => {
       try {
-        const response = await api.patch<ApiResponse<CartData>>(`/cart/${cartItemId}`, {
-          product: productId,
-          quantity: quantity
-        })
+        const response = await api.put<ApiResponse<CartData>>('/cart', { quantity, product: productId })
         return response.data.data
       } catch (error) {
         if (error instanceof Error) {
           throw new Error(error.message)
         }
-        throw error
+
       }
     },
     onSuccess: () => {
@@ -137,7 +134,6 @@ export const useUpdateCartItem = () => {
       if (error instanceof Error) {
         throw new Error(error.message)
       }
-      throw error
     }
   })
 }

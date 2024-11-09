@@ -38,7 +38,7 @@ export const ProductList = () => {
   const page = parseInt(searchParams.get("page") ?? "1", 10);
 
   const { data, isLoading, error, isFetching } = useProducts(
-    
+    undefined,
     page,
     itemsPerPage
   );
