@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Card,
   Text,
@@ -19,31 +19,40 @@ import { useSelector } from "react-redux";
 import { useRouter, useSearchParams } from "next/navigation";
 import { RootState } from "../redux/store";
 import { useProducts } from "../api/query/query";
-import { useCallback } from "react";
-import dynamic from "next/dynamic";
 import { debounce } from 'lodash';
+import dynamic from "next/dynamic";
 
 const DynamicPagination = dynamic(
   () => import("@mantine/core").then((mod) => mod.Pagination),
-  {
-    loading: () => <p>Loading...</p>,
-    ssr: false,
-  }
+  { loading: () => <p>Loading...</p>, ssr: false }
 );
 
 export const ProductList = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const itemsPerPage = 12;
+  
+  const categoryId = searchParams.get("category") 
+    ? parseInt(searchParams.get("category")!, 10) 
+    : undefined;
 
+  const searchTerm = useSelector((state: RootState) => state.search.searchTerm);
+  
   const [page, setPage] = useState(parseInt(searchParams.get("page") ?? "1", 10));
 
+  React.useEffect(() => {
+    setPage(1);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", "1");
+    router.push(`?${params.toString()}`, { scroll: false });
+  }, [searchTerm, categoryId]);
+
   const { data, isLoading, error, isFetching } = useProducts(
-    undefined,
+    categoryId,
     page,
-    itemsPerPage
-  );
-  const searchTerm = useSelector((state: RootState) => state.search.searchTerm);
+    itemsPerPage,
+    searchTerm 
+    );
 
   const products = data?.items || [];
   const totalPages = data?.totalPages || 1;
@@ -64,24 +73,6 @@ export const ProductList = () => {
     },
     [debouncedHandlePageChange]
   );
-
-  const filteredProducts = useMemo(() => {
-    if (!products || !searchTerm) {
-      return products;
-    }
-
-    const searchLower = searchTerm.toLowerCase();
-    return products.filter((product) =>
-      product.name.toLowerCase().includes(searchLower)
-    );
-  }, [products, searchTerm]);
-
-  useEffect(() => {
-    const start = performance.now();
-    // Simulating some rendering work
-    const end = performance.now();
-    console.log(`Render time: ${end - start}ms`);
-  });
 
   if (isLoading) {
     return (
@@ -106,11 +97,13 @@ export const ProductList = () => {
     );
   }
 
-  if (filteredProducts.length === 0) {
+  if (products.length === 0) {
     return (
       <Container size="xl" py="xl">
         <Title order={1} mb="lg">
           Products
+          {searchTerm && ` - Search results for "${searchTerm}"`}
+          {categoryId && ` - Category ${categoryId}`}
         </Title>
         <Alert
           icon={<IconAlertCircle size={16} />}
@@ -130,6 +123,8 @@ export const ProductList = () => {
     <Container size="xl" py="xl">
       <Title order={1} mb="lg">
         Products
+        {searchTerm && ` - Search results for "${searchTerm}"`}
+        {categoryId && ` - Category ${categoryId}`}
       </Title>
 
       {isFetching && (
@@ -139,7 +134,7 @@ export const ProductList = () => {
       )}
 
       <Grid>
-        {filteredProducts.map((product) => (
+        {products.map((product) => (
           <Grid.Col key={product.id} span={{ base: 12, sm: 6, md: 4, lg: 3 }}>
             <Link
               href={`/product/${product.id}`}

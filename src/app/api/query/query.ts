@@ -12,10 +12,15 @@ interface ProductResponse {
   items: IProduct
 }
 
-export const useProducts = (categoryId?: number, page: number = 1, limit: number = 12, searchTerm?: string) => {
+export const useProducts = (
+  categoryId?: number,
+  page: number = 1,
+  limit: number = 12,
+  searchTerm?: string
+) => {
   const offset = (page - 1) * limit;
 
-  return useQuery<{ items: IProduct[], totalPages: number }, Error>({
+  return useQuery<{ items: IProduct[]; totalPages: number }, Error>({
     queryKey: ['products', categoryId, searchTerm, page, limit],
     queryFn: async () => {
       try {
@@ -24,8 +29,8 @@ export const useProducts = (categoryId?: number, page: number = 1, limit: number
           limit: limit.toString(),
         });
 
-        if (searchTerm) {
-          queryParams.append('search', searchTerm);
+        if (searchTerm?.trim()) {
+          queryParams.append('search', searchTerm.trim());
         }
 
         if (categoryId) {
@@ -36,8 +41,13 @@ export const useProducts = (categoryId?: number, page: number = 1, limit: number
           `/products?${queryParams.toString()}`
         );
 
-        console.log('API Request URL:', `/products?${queryParams.toString()}`);
-        console.log('Response:', response.data);
+        console.log('API Request:', {
+          url: `/products?${queryParams.toString()}`,
+          searchTerm,
+          categoryId,
+          page,
+          limit,
+        });
 
         return {
           items: response.data.data.items,
@@ -48,6 +58,9 @@ export const useProducts = (categoryId?: number, page: number = 1, limit: number
         throw error;
       }
     },
+    staleTime: 1000 * 60, 
+    retry: 2, 
+    refetchOnWindowFocus: false, 
   });
 };
 
@@ -116,24 +129,23 @@ export const useAddToCart = () => {
 export const useUpdateCartItem = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ quantity, productId }: { cartItemId: number, quantity: number, productId: number }) => {
+    mutationFn: async ({ cartItemId, quantity, productId }: { cartItemId: number, quantity: number, productId: number }) => {
       try {
-        const response = await api.put<ApiResponse<CartData>>('/cart', { quantity, product: productId })
+        const response = await api.put<ApiResponse<CartData>>(`/cart/${cartItemId}`, { quantity, product: productId })
         return response.data.data
       } catch (error) {
         if (error instanceof Error) {
           throw new Error(error.message)
         }
-
+        throw new Error('An unknown error occurred')
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] })
     },
     onError: (error) => {
-      if (error instanceof Error) {
-        throw new Error(error.message)
-      }
+      console.error('Failed to update cart item:', error)
+      throw error
     }
   })
 }

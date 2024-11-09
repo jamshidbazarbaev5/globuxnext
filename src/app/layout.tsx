@@ -50,6 +50,7 @@ export default function RootLayout({
                       )}
                       <Grid.Col span={showCategoryList ? 9 : 12}>
                         {children}
+                        <Analytics />
                       </Grid.Col>
                     </Grid>
                   </Container>

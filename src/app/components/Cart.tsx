@@ -23,15 +23,10 @@ import {notifications } from "@mantine/notifications"
 import { IconShoppingCart, IconTrash } from "@tabler/icons-react";
 import {useRouter} from "next/navigation"
 
-
 interface ProductImage {
   id: number;
   image: string;
 }
-
-
-
-
 
 export default function Cart() {
   const { data: cartData, isLoading, error } = useCart();

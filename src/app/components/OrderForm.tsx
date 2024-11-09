@@ -31,13 +31,9 @@ import {
   IconCreditCard,
 } from "@tabler/icons-react";
 import { useAuth } from "../context/context";
-import { useRouter } from 'next/navigation'
+import { useRouter } from  'next/navigation'
+import router from "next/router";
 import Link from "next/link";
-import dynamic from 'next/dynamic';
-
-const DynamicModal = dynamic(() => import('@mantine/core').then((mod) => mod.Modal), {
-  ssr: false,
-});
 
 interface CartItem {
   id: number;
@@ -54,7 +50,7 @@ const OrderForm: React.FC = () => {
   const { data: cartData, isLoading: isCartLoading } = useCart();
   const { data: deliveryData, isLoading: isDeliveryLoading } = useDelivery();
   const { user } = useAuth();
-  const router = useRouter();
+  const navigate = useRouter();
 
   const [isDelivery, setIsDelivery] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "online">("cash");
@@ -80,10 +76,15 @@ const OrderForm: React.FC = () => {
 
   const ws = useRef<WebSocket | null>(null);
   const [token, setToken] = useState<string | null>(null);
-
+    console.log(token)
   useEffect(() => {
-    setToken(localStorage.getItem("token"));
+    if (typeof window !== 'undefined') {
+      setToken(localStorage.getItem("token"));
+    }
   }, []);
+  const handleMyOrders = ()=>{
+    router.push('/myorders')
+  }
 
   const connectWebSocket = useCallback(() => {
     if (!token) return;
@@ -92,11 +93,13 @@ const OrderForm: React.FC = () => {
     ws.current = new WebSocket(`wss://globus-nukus.uz/ws/orders?token=${token}`);
 
     ws.current.onopen = () => {
+      console.log("WebSocket connection established");
       setIsConnected(true);
       setIsConnecting(false);
     };
 
-    ws.current.onerror = () => {
+    ws.current.onerror = (error) => {
+      console.error("WebSocket error:", error);
       setIsConnected(false);
       setIsConnecting(false);
       notifications.show({
@@ -107,6 +110,7 @@ const OrderForm: React.FC = () => {
     };
 
     ws.current.onclose = (event) => {
+      console.log("WebSocket connection closed:", event);
       setIsConnected(false);
       setIsConnecting(false);
       if (!event.wasClean || event.code === 1006) {
@@ -181,6 +185,7 @@ const OrderForm: React.FC = () => {
 
     ws.current.onmessage = async (event) => {
       const response = JSON.parse(event.data);
+      console.log("WebSocket response:", response);
 
       if (response.type === "order_created") {
         const newOrderId = response.data?.id;
@@ -200,6 +205,7 @@ const OrderForm: React.FC = () => {
               throw new Error(receiptResult.errMessage || "Failed to create receipt");
             }
           } catch (error) {
+            console.error("Error creating receipt:", error);
             notifications.show({
               title: "Error",
               message: "Failed to create receipt. Please try again later.",
@@ -241,6 +247,7 @@ const OrderForm: React.FC = () => {
         throw new Error(result.errMessage || "Failed to create card");
       }
     } catch (error) {
+      console.error("Error in handleCreateCard:", error);
       notifications.show({
         title: "Error",
         message: error instanceof Error
@@ -305,6 +312,7 @@ const OrderForm: React.FC = () => {
         throw new Error(paymentResult.errMessage || "Failed to process payment");
       }
     } catch (error) {
+      console.error("Error processing payment:", error);
       notifications.show({
         title: "Payment Error",
         message: error instanceof Error ? error.message : "An error occurred while processing the payment",
@@ -446,7 +454,7 @@ const OrderForm: React.FC = () => {
         </Stack>
       </form>
 
-      <DynamicModal
+      <Modal
         opened={showCardModal}
         onClose={() => setShowCardModal(false)}
         title="Добавить карту"
@@ -472,9 +480,9 @@ const OrderForm: React.FC = () => {
             Добавить карту
           </Button>
         </Stack>
-      </DynamicModal>
+      </Modal>
 
-      <DynamicModal
+      <Modal
         opened={showVerificationModal}
         onClose={() => setShowVerificationModal(false)}
         title="Подтверждение оплаты"
@@ -494,9 +502,10 @@ const OrderForm: React.FC = () => {
             Подтвердить и оплатить
           </Button>
         </Stack>
-      </DynamicModal>
+      </Modal>
     </Container>
   );
+
 };
 
 export default OrderForm;
