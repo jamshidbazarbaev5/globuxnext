@@ -1,3 +1,5 @@
+
+
 import React from "react";
 import {
   Card,
@@ -10,23 +12,25 @@ import {
   Title,
   Stack,
   Alert,
+  Button,
 } from "@mantine/core";
-import { IconAlertCircle } from "@tabler/icons-react";
+import { IconAlertCircle, IconShoppingCart } from "@tabler/icons-react";
 import Link from "next/link";
 import { IProduct, ICategory } from "@/app/models/models";
 import { GetStaticProps, InferGetStaticPropsType } from "next";
 import { api } from "@/app/api/axios/axios";
+import { useAddToCart } from "../api/query/query";
 
 export const getStaticPaths = async () => {
-  const response = await api.get('/categories');
+  const response = await api.get("/categories");
   const categories = response.data.data.categories;
 
   const paths = categories.map((category: ICategory) => ({
     params: { categoryId: category.id.toString() },
   }));
 
-  paths.push({ params: { categoryId: '0' } }); 
-  return { paths, fallback: 'blocking' };
+  paths.push({ params: { categoryId: "0" } });
+  return { paths, fallback: "blocking" };
 };
 
 export const getStaticProps: GetStaticProps<{
@@ -36,7 +40,9 @@ export const getStaticProps: GetStaticProps<{
   const categoryId = params?.categoryId as string;
   try {
     const [productsRes, categoryRes] = await Promise.all([
-      api.get(`/products${categoryId !== "0" ? `?category=${categoryId}` : ""}`),
+      api.get(
+        `/products${categoryId !== "0" ? `?category=${categoryId}` : ""}`
+      ),
       categoryId !== "0" ? api.get(`/categories/${categoryId}`) : null,
     ]);
 
@@ -45,7 +51,7 @@ export const getStaticProps: GetStaticProps<{
         products: productsRes.data.data.items,
         category: categoryRes ? categoryRes.data.data : null,
       },
-      revalidate: 60 * 60, 
+      revalidate: 60 * 60,
     };
   } catch (error) {
     console.error("Failed to fetch data:", error);
@@ -71,6 +77,16 @@ const CategoryProducts = ({
       </Container>
     );
   }
+  const addToCart = useAddToCart();
+  const handleAddToCart = (
+    e: React.MouseEvent,
+    productId: number,
+    quantity: number
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart.mutate({ productId, quantity });
+  };
 
   return (
     <Container size="xl" py="xl">
@@ -123,6 +139,16 @@ const CategoryProducts = ({
                     <Badge color="pink" variant="light">
                       {product.price.toLocaleString()} сум
                     </Badge>
+                    <Group justify="apart" style={{ marginTop: "auto" }}>
+                      <Button
+                        onClick={(e) => handleAddToCart(e, product.id, 1)}
+                        size="xs"
+                        variant="light"
+                        leftSection={<IconShoppingCart size={16} />}
+                      >
+                        Add to Cart
+                      </Button>
+                    </Group>
                   </Stack>
                 </Card>
               </Link>
