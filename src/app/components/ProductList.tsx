@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Card,
   Text,
@@ -21,6 +21,7 @@ import { RootState } from "../redux/store";
 import { useProducts } from "../api/query/query";
 import { useCallback } from "react";
 import dynamic from "next/dynamic";
+import { debounce } from 'lodash';
 
 const DynamicPagination = dynamic(
   () => import("@mantine/core").then((mod) => mod.Pagination),
@@ -35,7 +36,7 @@ export const ProductList = () => {
   const searchParams = useSearchParams();
   const itemsPerPage = 12;
 
-  const page = parseInt(searchParams.get("page") ?? "1", 10);
+  const [page, setPage] = useState(parseInt(searchParams.get("page") ?? "1", 10));
 
   const { data, isLoading, error, isFetching } = useProducts(
     undefined,
@@ -47,13 +48,21 @@ export const ProductList = () => {
   const products = data?.items || [];
   const totalPages = data?.totalPages || 1;
 
-  const handlePageChange = useCallback(
-    (newPage: number) => {
+  const debouncedHandlePageChange = useCallback(
+    debounce((newPage: number) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set("page", newPage.toString());
       router.push(`?${params.toString()}`, { scroll: false });
-    },
+    }, 300),
     [searchParams, router]
+  );
+
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      setPage(newPage);
+      debouncedHandlePageChange(newPage);
+    },
+    [debouncedHandlePageChange]
   );
 
   const filteredProducts = useMemo(() => {
@@ -66,6 +75,13 @@ export const ProductList = () => {
       product.name.toLowerCase().includes(searchLower)
     );
   }, [products, searchTerm]);
+
+  useEffect(() => {
+    const start = performance.now();
+    // Simulating some rendering work
+    const end = performance.now();
+    console.log(`Render time: ${end - start}ms`);
+  });
 
   if (isLoading) {
     return (

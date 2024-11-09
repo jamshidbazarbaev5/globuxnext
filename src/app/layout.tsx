@@ -9,6 +9,7 @@ import { AuthProvider } from "./context/context";
 import Header from "./components/Header";
 import CategoryList from "./components/CategoryList";
 import { usePathname } from "next/navigation";
+import { Analytics } from "@vercel/analytics/react"
 
 const queryClient = new QueryClient();
 
