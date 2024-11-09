@@ -12,14 +12,15 @@ import {
   Loader,
   Box,
   Image,
+  Button,
 } from "@mantine/core";
-import { IconAlertCircle } from "@tabler/icons-react";
+import { IconAlertCircle, IconShoppingCart } from "@tabler/icons-react";
 import Link from "next/link";
 import { useSelector } from "react-redux";
 import { useRouter, useSearchParams } from "next/navigation";
 import { RootState } from "../redux/store";
-import { useProducts } from "../api/query/query";
-import { debounce } from 'lodash';
+import { useAddToCart, useProducts } from "../api/query/query";
+import { debounce } from "lodash";
 import dynamic from "next/dynamic";
 
 const DynamicPagination = dynamic(
@@ -31,14 +32,16 @@ export const ProductList = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const itemsPerPage = 12;
-  
-  const categoryId = searchParams.get("category") 
-    ? parseInt(searchParams.get("category")!, 10) 
+
+  const categoryId = searchParams.get("category")
+    ? parseInt(searchParams.get("category")!, 10)
     : undefined;
 
   const searchTerm = useSelector((state: RootState) => state.search.searchTerm);
-  
-  const [page, setPage] = useState(parseInt(searchParams.get("page") ?? "1", 10));
+
+  const [page, setPage] = useState(
+    parseInt(searchParams.get("page") ?? "1", 10)
+  );
 
   React.useEffect(() => {
     setPage(1);
@@ -51,8 +54,8 @@ export const ProductList = () => {
     categoryId,
     page,
     itemsPerPage,
-    searchTerm 
-    );
+    searchTerm
+  );
 
   const products = data?.items || [];
   const totalPages = data?.totalPages || 1;
@@ -65,7 +68,12 @@ export const ProductList = () => {
     }, 300),
     [searchParams, router]
   );
-
+  const addToCart = useAddToCart();
+  const handleAddToCart = (e: React.MouseEvent, productId: number, quantity: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart.mutate({ productId, quantity });
+  };
   const handlePageChange = useCallback(
     (newPage: number) => {
       setPage(newPage);
@@ -161,7 +169,7 @@ export const ProductList = () => {
                   />
                 </Card.Section>
 
-                <Stack mt="md" gap="sm">
+                <Stack mt="md" gap="sm" style={{ flex: 1 }}>
                   <Group justify="space-between" align="flex-start">
                     <Text fw={500} lineClamp={2} style={{ flex: 1 }}>
                       {product.name}
@@ -173,9 +181,19 @@ export const ProductList = () => {
                     )}
                   </Group>
 
-                  <Badge color="pink" variant="light">
-                    {product.price.toLocaleString()} сум
-                  </Badge>
+                  <Group justify="apart" style={{ marginTop: 'auto' }}>
+                    <Badge color="pink" variant="light">
+                      {product.price.toLocaleString()} сум
+                    </Badge>
+                    <Button 
+                      onClick={(e) => handleAddToCart(e, product.id, 1)} 
+                      size="xs" 
+                      variant="light"
+                      leftSection={<IconShoppingCart size={16} />}
+                    >
+                      Add to Cart
+                    </Button>
+                  </Group>
                 </Stack>
               </Card>
             </Link>
